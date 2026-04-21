@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Babyboo AU Invoice Validator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f7f7f5; --bg3: #f0efeb;
+    --text: #1a1a18; --text2: #6b6b67; --text3: #9a9a96;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --green-bg: #eaf3de; --green-text: #27500a;
+    --amber-bg: #faeeda; --amber-text: #633806;
+    --red-bg: #fcebeb; --red-text: #791f1f;
+    --blue-bg: #e6f1fb; --blue-text: #0c447c;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg2); color: var(--text); line-height: 1.6; min-height: 100vh; }
+  .layout { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  .page-header { margin-bottom: 2rem; }
+  .page-header h1 { font-size: 22px; font-weight: 500; color: var(--text); }
+  .page-header p { font-size: 14px; color: var(--text2); margin-top: 4px; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 1rem; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; color: var(--text2); }
+  .field input, .field select { height: 38px; padding: 0 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); font-size: 13px; width: 100%; font-family: inherit; }
+  .field input:focus, .field select:focus { outline: 2px solid var(--text); outline-offset: -1px; }
+  .rate-item { display: flex; flex-direction: column; gap: 4px; }
+  .rate-item label { font-size: 11px; color: var(--text3); }
+  .rate-item input { height: 34px; padding: 0 8px; border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--bg2); color: var(--text); font-size: 12px; font-family: inherit; }
+  .rate-item input:focus { outline: 2px solid var(--text); outline-offset: -1px; background: var(--bg); }
+  .upload-zone { border: 1px dashed var(--border2); border-radius: var(--radius); padding: 2.5rem 1rem; text-align: center; cursor: pointer; transition: background .15s; }
+  .upload-zone:hover { background: var(--bg2); }
+  .upload-zone.has-file { border-style: solid; border-color: var(--green-text); background: var(--green-bg); }
+  .upload-zone p { font-size: 13px; color: var(--text2); }
+  .upload-zone .fn { font-size: 14px; font-weight: 500; color: var(--green-text); }
+  .upload-zone .hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  #file-input { display: none; }
+  .run-btn { width: 100%; height: 44px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius); font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity .15s; }
+  .run-btn:disabled { opacity: .35; cursor: not-allowed; }
+  .run-btn:not(:disabled):hover { opacity: .82; }
+  .status-bar { text-align: center; padding: 12px; font-size: 13px; color: var(--text2); min-height: 44px; display: flex; align-items: center; justify-content: center; }
+  .thinking { display: flex; align-items: center; gap: 8px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: pulse 1.2s ease-in-out infinite; }
+  .dot:nth-child(2) { animation-delay: .2s; } .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes pulse { 0%,100%{opacity:.25} 50%{opacity:1} }
+  .results { display: none; }
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .metric { background: var(--bg2); border-radius: var(--radius); padding: 12px; }
+  .metric .lbl { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .metric .val { font-size: 18px; font-weight: 500; color: var(--text); }
+  .metric.ok .val { color: var(--green-text); }
+  .metric.warn .val { color: var(--amber-text); }
+  .metric.flag .val { color: var(--red-text); }
+  .verdict { padding: 12px 16px; border-radius: var(--radius); margin-bottom: 1rem; font-size: 13px; font-weight: 500; }
+  .verdict.pass { background: var(--green-bg); color: var(--green-text); }
+  .verdict.review { background: var(--amber-bg); color: var(--amber-text); }
+  .verdict.fail { background: var(--red-bg); color: var(--red-text); }
+  .section-lbl { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; padding: 10px 0 4px; }
+  .check-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .check-row:last-child { border-bottom: none; }
+  .ci { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; margin-top: 2px; }
+  .ci.pass { background: var(--green-bg); color: var(--green-text); }
+  .ci.warn { background: var(--amber-bg); color: var(--amber-text); }
+  .ci.flag { background: var(--red-bg); color: var(--red-text); }
+  .ci.info { background: var(--blue-bg); color: var(--blue-text); }
+  .ck-name { font-weight: 500; color: var(--text); }
+  .ck-detail { font-size: 12px; color: var(--text2); margin-top: 2px; line-height: 1.5; }
+  table.items { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+  table.items th { text-align: left; padding: 6px 8px; font-size: 11px; font-weight: 500; color: var(--text2); border-bottom: 0.5px solid var(--border2); }
+  table.items td { padding: 7px 8px; border-bottom: 0.5px solid var(--border); color: var(--text); vertical-align: top; word-break: break-word; }
+  table.items tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+  .badge.g10 { background: var(--green-bg); color: var(--green-text); }
+  .badge.zr { background: var(--blue-bg); color: var(--blue-text); }
+  .badge.ex { background: var(--bg2); color: var(--text3); }
+  .ct-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
+  .ct-label { color: var(--text2); } .ct-val { font-weight: 500; }
+  .ct-outstanding { color: var(--amber-text); }
+  hr.div { border: none; border-top: 0.5px solid var(--border); margin: 10px 0; }
+  .note { font-size: 12px; color: var(--text3); padding: 8px 0; }
+  @media (max-width: 600px) {
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .metrics { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <div class="page-header">
+    <h1>AU freight invoice validator</h1>
+    <p>Upload an invoice PDF, enter the quoted rates, and Claude will check every line item for you.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Shipment details</div>
+    <div class="two-col" style="margin-bottom:12px">
+      <div class="field">
+        <label>Invoice type</label>
+        <select id="inv-type">
+          <option value="air">Air freight (Toll)</option>
+          <option value="sea">Sea freight (Beyond Borders)</option>
+          <option value="customs">Customs disbursement only</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Number of suppliers / shipments expected</label>
+        <input type="number" id="num-suppliers" value="2" min="1" max="20">
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="field">
+        <label>Week number</label>
+        <input type="text" id="week-num" placeholder="e.g. Week 14">
+      </div>
+      <div class="field">
+        <label>Quoted total (AUD, excl. GST)</label>
+        <input type="text" id="quoted-total" placeholder="e.g. 31933.00">
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="rates-card">
+    <div class="card-title">Quoted rates</div>
+    <div id="air-rates">
+      <div class="three-col" style="margin-bottom:10px">
+        <div class="rate-item"><label>Intl freight (USD/kg) <span style="color:var(--amber-text);font-weight:500">— update weekly</span></label><input type="text" id="r-intl" placeholder="e.g. 4.16"></div>
+        <div class="rate-item"><label>Cartage destination (AUD/kg)</label><input type="text" id="r-cartage" value="0.30"></div>
+        <div class="rate-item"><label>Airport terminal dest (AUD/kg)</label><input type="text" id="r-terminal" value="0.77"></div>
+      </div>
+      <div class="three-col">
+        <div class="rate-item"><label>Fuel surcharge % on cartage <span style="color:var(--amber-text);font-weight:500">— update when notified</span></label><input type="text" id="r-fuel" placeholder="e.g. 43.20"></div>
+        <div class="rate-item"><label>Handling dest (AUD/kg)</label><input type="text" id="r-handling" value="0.10"></div>
+        <div class="rate-item"><label>Packing material (AUD/kg)</label><input type="text" id="r-packing" value="0.09"></div>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-top:10px">Pre-filled values are standard Toll rates. Update intl freight each week from the rate Toll provides, and fuel surcharge % whenever Toll sends a rate change notification.</p>
+    </div>
+    <div id="sea-rates" style="display:none">
+      <div class="three-col">
+        <div class="rate-item"><label>Ocean freight (AUD/CBM)</label><input type="text" id="r-ocean" placeholder="e.g. 50.00"></div>
+        <div class="rate-item"><label>Destination port/CFS (AUD/CBM)</label><input type="text" id="r-destport" placeholder="e.g. 110.00"></div>
+        <div class="rate-item"><label>Ex-works quoted total (AUD)</label><input type="text" id="r-exw" placeholder="e.g. 1103.86"></div>
+      </div>
+    </div>
+    <div id="customs-rates" style="display:none">
+      <p class="note">Customs disbursements have fixed government rates — no quoted rates required. Enter the number of suppliers above and Claude will verify the per-supplier charges are consistent and flag any outstanding invoices.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Invoice PDF</div>
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+      <input type="file" id="file-input" accept=".pdf">
+      <p id="upload-label">Click to upload invoice PDF</p>
+      <p class="hint">Toll, Beyond Borders, or customs disbursement invoices</p>
+    </div>
+  </div>
+
+  <button class="run-btn" id="run-btn" disabled onclick="runValidation()">Validate invoice</button>
+  <div class="status-bar" id="status"></div>
+
+  <div class="results" id="results">
+    <div class="metrics" id="metrics"></div>
+    <div class="verdict" id="verdict"></div>
+
+    <div class="card">
+      <div class="card-title">Validation checks</div>
+      <div id="checks"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Extracted line items</div>
+      <div style="overflow-x:auto">
+        <table class="items" id="items-table"></table>
+      </div>
+    </div>
+
+    <div class="card" id="ct-card" style="display:none">
+      <div class="card-title">Customs disbursement tracker</div>
+      <div id="ct-body"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let pdfFile = null;
+
+document.getElementById('file-input').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  pdfFile = f;
+  const zone = document.getElementById('upload-zone');
+  zone.classList.add('has-file');
+  document.getElementById('upload-label').innerHTML = '<span class="fn">' + f.name + '</span>';
+  document.getElementById('run-btn').disabled = false;
+});
+
+document.getElementById('inv-type').addEventListener('change', e => {
+  const t = e.target.value;
+  document.getElementById('air-rates').style.display = t === 'air' ? '' : 'none';
+  document.getElementById('sea-rates').style.display = t === 'sea' ? '' : 'none';
+  document.getElementById('customs-rates').style.display = t === 'customs' ? '' : 'none';
+});
+
+function setStatus(msg, spin) {
+  const el = document.getElementById('status');
+  if (spin) {
+    el.innerHTML = '<div class="thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>' + msg + '</span></div>';
+  } else {
+    el.textContent = msg;
+  }
+}
+
+const aud = n => new Intl.NumberFormat('en-AU', {style:'currency', currency:'AUD'}).format(n);
+
+function renderMetrics(d) {
+  const varCls = d.variance == null ? '' : Math.abs(d.variance) > 1000 ? 'flag' : Math.abs(d.variance) > 300 ? 'warn' : 'ok';
+  const chkCls = d.passed === d.total ? 'ok' : d.passed >= d.total * 0.75 ? 'warn' : 'flag';
+  const scCls = d.billed === d.expected ? 'ok' : 'flag';
+  document.getElementById('metrics').innerHTML =
+    '<div class="metric"><div class="lbl">Invoice total (ex-GST)</div><div class="val">' + (d.total_ ? aud(d.total_) : '—') + '</div></div>' +
+    '<div class="metric ' + varCls + '"><div class="lbl">vs quoted</div><div class="val">' + (d.variance != null ? (d.variance >= 0 ? '+' : '') + aud(d.variance) : '—') + '</div></div>' +
+    '<div class="metric ' + chkCls + '"><div class="lbl">Checks passed</div><div class="val">' + d.passed + ' / ' + d.total + '</div></div>' +
+    '<div class="metric ' + scCls + '"><div class="lbl">Shipments billed</div><div class="val">' + (d.billed != null ? d.billed + ' of ' + d.expected : '—') + '</div></div>';
+}
+
+function renderVerdict(checks) {
+  const flags = checks.filter(c => c.status === 'flag').length;
+  const warns = checks.filter(c => c.status === 'warn').length;
+  const el = document.getElementById('verdict');
+  if (flags > 0) {
+    el.className = 'verdict fail';
+    el.textContent = flags + ' issue' + (flags > 1 ? 's' : '') + ' require attention before approving — see checks below.';
+  } else if (warns > 0) {
+    el.className = 'verdict review';
+    el.textContent = 'Invoice is broadly correct but ' + warns + ' item' + (warns > 1 ? 's' : '') + ' worth reviewing before approving.';
+  } else {
+    el.className = 'verdict pass';
+    el.textContent = 'All checks passed — invoice looks correct and ready to approve in ApprovalMax.';
+  }
+}
+
+function renderChecks(checks) {
+  const icons = {pass:'✓', warn:'!', flag:'✕', info:'i'};
+  const groups = {};
+  checks.forEach(c => { if (!groups[c.group]) groups[c.group] = []; groups[c.group].push(c); });
+  let html = '';
+  for (const [g, items] of Object.entries(groups)) {
+    html += '<div class="section-lbl">' + g + '</div>';
+    items.forEach(c => {
+      html += '<div class="check-row"><div class="ci ' + c.status + '">' + icons[c.status] + '</div><div><div class="ck-name">' + c.name + '</div><div class="ck-detail">' + c.detail + '</div></div></div>';
+    });
+  }
+  document.getElementById('checks').innerHTML = html;
+}
+
+function renderItems(items) {
+  if (!items || !items.length) return;
+  const cols = [['Charge', '40%'], ['Shipment ref', '22%'], ['Amount (AUD)', '20%'], ['GST', '12%']];
+  let html = '<thead><tr>' + cols.map(c => '<th style="width:' + c[1] + '">' + c[0] + '</th>').join('') + '</tr></thead><tbody>';
+  items.forEach(item => {
+    const gc = item.gst === '10%' ? 'g10' : item.gst === 'Zero rated' ? 'zr' : 'ex';
+    html += '<tr><td>' + item.charge + '</td><td style="color:var(--text2)">' + (item.ref || '—') + '</td><td style="text-align:right">' + aud(item.amount) + '</td><td><span class="badge ' + gc + '">' + item.gst + '</span></td></tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('items-table').innerHTML = html;
+}
+
+function renderCustomsTracker(ct) {
+  if (!ct) return;
+  document.getElementById('ct-card').style.display = '';
+  document.getElementById('ct-body').innerHTML =
+    '<div class="ct-row"><span class="ct-label">Shipment week</span><span class="ct-val">' + (ct.week || '—') + '</span></div>' +
+    '<div class="ct-row"><span class="ct-label">Suppliers expected</span><span class="ct-val">' + ct.suppliersExpected + '</span></div>' +
+    '<hr class="div">' +
+    '<div class="ct-row"><span class="ct-label">Customs charged on this invoice</span><span class="ct-val">' + aud(ct.thisInvoice) + '</span></div>' +
+    '<div class="ct-row"><span class="ct-label">Per-supplier amount</span><span class="ct-val">' + aud(ct.perSupplier) + '</span></div>' +
+    '<div class="ct-row"><span class="ct-label">Expected total (all suppliers)</span><span class="ct-val">' + aud(ct.expectedTotal) + '</span></div>' +
+    '<hr class="div">' +
+    '<div class="ct-row"><span class="ct-label">Outstanding (further invoices likely)</span><span class="ct-val ct-outstanding">' + aud(ct.outstanding) + '</span></div>';
+}
+
+async function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+async function runValidation() {
+  if (!pdfFile) return;
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('ct-card').style.display = 'none';
+  setStatus('Reading invoice PDF...', true);
+
+  try {
+    const b64 = await toBase64(pdfFile);
+    const type = document.getElementById('inv-type').value;
+    const numSup = parseInt(document.getElementById('num-suppliers').value) || 1;
+    const week = document.getElementById('week-num').value;
+    const quotedTotal = parseFloat(document.getElementById('quoted-total').value) || null;
+
+    let rateCtx = '';
+    if (type === 'air') {
+      rateCtx = `Quoted rates: intl freight USD ${document.getElementById('r-intl').value||'not provided'}/kg, cartage dest AUD ${document.getElementById('r-cartage').value||'not provided'}/kg, airport terminal dest AUD ${document.getElementById('r-terminal').value||'not provided'}/kg, fuel surcharge ${document.getElementById('r-fuel').value||'not provided'}% of cartage, handling AUD ${document.getElementById('r-handling').value||'not provided'}/kg, packing material AUD ${document.getElementById('r-packing').value||'not provided'}/kg.`;
+    } else if (type === 'sea') {
+      rateCtx = `Quoted rates: ocean freight AUD ${document.getElementById('r-ocean').value||'not provided'}/CBM, destination port/CFS AUD ${document.getElementById('r-destport').value||'not provided'}/CBM, ex-works quoted AUD ${document.getElementById('r-exw').value||'not provided'}.`;
+    }
+
+    const FIXED_AIR = `AU Air (Toll) fixed charges per shipment: customs import clearance AUD 65.00, documentation fee AUD 75.00, payment transaction fee AUD 7.50. Variable per-kg: airport terminal dest 0.77/kg, cartage 0.30/kg, handling 0.10/kg (min $50), packing material 0.09/kg, airport terminal origin ~0.15 USD/kg (zero rated), pick-up origin variable USD. Fuel surcharge is a % of cartage (Toll notifies when % changes).`;
+    const FIXED_SEA = `AU Sea (Beyond Borders) fixed charges: customs clearance AUD 120, quarantine AUD 35, sea cargo automation AUD 30, CMR fee AUD 35, delivery order AUD 75, EDI fee AUD 25, LCL CFS slot booking AUD 50. Variable: ocean freight (rate/CBM), destination port & CFS (rate/CBM), LCL delivery (~$275 single truck, more for multiple), cartage fuel surcharge (% of delivery). Ex-works is rolled up (hard to validate exactly).`;
+
+    const fixedCtx = type === 'air' ? FIXED_AIR : type === 'sea' ? FIXED_SEA : 'Customs disbursements: expect ~AUD 198-220 per supplier for declaration processing and AQIS. There may be more invoices coming if this only covers some suppliers.';
+
+    const prompt = `You are validating a Babyboo AU inbound freight invoice. Analyse the PDF carefully.
+
+CONTEXT:
+- Type: ${type === 'air' ? 'AU Air Freight (Toll Global Forwarding)' : type === 'sea' ? 'AU Sea Freight (Beyond Borders Express)' : 'Customs Disbursement'}
+- Expected suppliers/shipments: ${numSup}
+- Week: ${week || 'not specified'}
+- Quoted total excl GST: ${quotedTotal ? 'AUD ' + quotedTotal : 'not provided'}
+- ${rateCtx}
+- ${fixedCtx}
+
+INSTRUCTIONS:
+1. Extract every line item: charge name, shipment ref (HBL/job number), amount in AUD, GST treatment (10%, Zero rated, or Exempt)
+2. Count shipments billed vs expected ${numSup}
+3. For per-kg or per-CBM charges: check rate used matches quoted rate. For USD charges allow small FX rounding variance. Flag rate mismatches.
+4. For fixed charges: verify each matches expected amount. Flag any unexpected charges or amounts that differ.
+5. For fuel surcharge: verify % matches quoted percentage.
+6. Calculate variance between invoice total and quoted total if quoted total provided.
+7. For customs disbursements: calculate per-supplier amount, expected total for all ${numSup} suppliers, and outstanding amount.
+8. Note any charges not seen before or anything unusual.
+
+RETURN VALID JSON ONLY — no markdown, no preamble, no trailing text:
+{
+  "invoiceTotal": number,
+  "invoiceTotalWithGST": number,
+  "shipmentsBilled": number,
+  "shipmentsExpected": ${numSup},
+  "variance": number or null,
+  "lineItems": [{"charge": string, "ref": string, "amount": number, "gst": "10%" | "Zero rated" | "Exempt"}],
+  "checks": [{"group": string, "name": string, "status": "pass"|"warn"|"flag"|"info", "detail": string}],
+  "customsTracker": {"week": string, "suppliersExpected": number, "thisInvoice": number, "perSupplier": number, "expectedTotal": number, "outstanding": number} or null
+}`;
+
+    setStatus('Analysing invoice with Claude...', true);
+
+    const WORKER_URL = 'https://YOUR-WORKER-NAME.YOUR-ACCOUNT.workers.dev';
+
+    const resp = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        messages: [{
+          role: 'user',
+          content: [
+            {type: 'document', source: {type: 'base64', media_type: 'application/pdf', data: b64}},
+            {type: 'text', text: prompt}
+          ]
+        }]
+      })
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error?.message || 'API error ' + resp.status);
+
+    const raw = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
+    let result;
+    try {
+      result = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    } catch(e) {
+      setStatus('Could not parse response — try again.');
+      document.getElementById('run-btn').disabled = false;
+      return;
+    }
+
+    setStatus('');
+    document.getElementById('results').style.display = '';
+
+    const checks = result.checks || [];
+    const passed = checks.filter(c => c.status === 'pass').length;
+
+    renderMetrics({
+      total_: result.invoiceTotal,
+      variance: result.variance,
+      passed,
+      total: checks.length,
+      billed: result.shipmentsBilled,
+      expected: result.shipmentsExpected
+    });
+    renderVerdict(checks);
+    renderChecks(checks);
+    renderItems(result.lineItems);
+    if (result.customsTracker) renderCustomsTracker(result.customsTracker);
+
+  } catch(err) {
+    setStatus('Error: ' + err.message);
+  }
+
+  document.getElementById('run-btn').disabled = false;
+}
+</script>
+</body>
+</html>
