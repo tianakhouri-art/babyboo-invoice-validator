@@ -7,7 +7,7 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #ffffff; --bg2: #f7f7f5; --bg3: #f0efeb;
+    --bg: #ffffff; --bg2: #f7f7f5;
     --text: #1a1a18; --text2: #6b6b67; --text3: #9a9a96;
     --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
     --green-bg: #eaf3de; --green-text: #27500a;
@@ -19,7 +19,7 @@
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg2); color: var(--text); line-height: 1.6; min-height: 100vh; }
   .layout { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
   .page-header { margin-bottom: 2rem; }
-  .page-header h1 { font-size: 22px; font-weight: 500; color: var(--text); }
+  .page-header h1 { font-size: 22px; font-weight: 500; }
   .page-header p { font-size: 14px; color: var(--text2); margin-top: 4px; }
   .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
   .card-title { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 1rem; }
@@ -46,7 +46,8 @@
   .status-bar { text-align: center; padding: 12px; font-size: 13px; color: var(--text2); min-height: 44px; display: flex; align-items: center; justify-content: center; }
   .thinking { display: flex; align-items: center; gap: 8px; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: pulse 1.2s ease-in-out infinite; }
-  .dot:nth-child(2) { animation-delay: .2s; } .dot:nth-child(3) { animation-delay: .4s; }
+  .dot:nth-child(2) { animation-delay: .2s; }
+  .dot:nth-child(3) { animation-delay: .4s; }
   @keyframes pulse { 0%,100%{opacity:.25} 50%{opacity:1} }
   .results { display: none; }
   .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1rem; }
@@ -79,7 +80,8 @@
   .badge.zr { background: var(--blue-bg); color: var(--blue-text); }
   .badge.ex { background: var(--bg2); color: var(--text3); }
   .ct-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
-  .ct-label { color: var(--text2); } .ct-val { font-weight: 500; }
+  .ct-label { color: var(--text2); }
+  .ct-val { font-weight: 500; }
   .ct-outstanding { color: var(--amber-text); }
   hr.div { border: none; border-top: 0.5px solid var(--border); margin: 10px 0; }
   .note { font-size: 12px; color: var(--text3); padding: 8px 0; }
@@ -101,7 +103,7 @@
     <div class="card-title">Shipment details</div>
     <div class="two-col" style="margin-bottom:12px">
       <div class="field">
-        <label>Invoice type</label>
+        <label for="inv-type">Invoice type</label>
         <select id="inv-type">
           <option value="air">Air freight (Toll)</option>
           <option value="sea">Sea freight (Beyond Borders)</option>
@@ -109,42 +111,69 @@
         </select>
       </div>
       <div class="field">
-        <label>Number of suppliers / shipments expected</label>
+        <label for="num-suppliers">Number of suppliers / shipments expected</label>
         <input type="number" id="num-suppliers" value="2" min="1" max="20">
       </div>
     </div>
     <div class="two-col">
       <div class="field">
-        <label>Week number</label>
+        <label for="week-num">Week number</label>
         <input type="text" id="week-num" placeholder="e.g. Week 14">
       </div>
       <div class="field">
-        <label>Quoted total (AUD, excl. GST)</label>
+        <label for="quoted-total">Quoted total (AUD, excl. GST)</label>
         <input type="text" id="quoted-total" placeholder="e.g. 31933.00">
       </div>
     </div>
   </div>
 
-  <div class="card" id="rates-card">
+  <div class="card">
     <div class="card-title">Quoted rates</div>
     <div id="air-rates">
       <div class="three-col" style="margin-bottom:10px">
-        <div class="rate-item"><label>Intl freight (USD/kg) <span style="color:var(--amber-text);font-weight:500">— update weekly</span></label><input type="text" id="r-intl" placeholder="e.g. 4.16"></div>
-        <div class="rate-item"><label>Cartage destination (AUD/kg)</label><input type="text" id="r-cartage" value="0.30"></div>
-        <div class="rate-item"><label>Airport terminal dest (AUD/kg)</label><input type="text" id="r-terminal" value="0.77"></div>
+        <div class="rate-item">
+          <label for="r-intl">Intl freight (USD/kg) <span style="color:var(--amber-text);font-weight:500">— update weekly</span></label>
+          <input type="text" id="r-intl" placeholder="e.g. 4.16">
+        </div>
+        <div class="rate-item">
+          <label for="r-cartage">Cartage destination (AUD/kg)</label>
+          <input type="text" id="r-cartage" value="0.30">
+        </div>
+        <div class="rate-item">
+          <label for="r-terminal">Airport terminal dest (AUD/kg)</label>
+          <input type="text" id="r-terminal" value="0.77">
+        </div>
       </div>
       <div class="three-col">
-        <div class="rate-item"><label>Fuel surcharge % on cartage <span style="color:var(--amber-text);font-weight:500">— update when notified</span></label><input type="text" id="r-fuel" placeholder="e.g. 43.20"></div>
-        <div class="rate-item"><label>Handling dest (AUD/kg)</label><input type="text" id="r-handling" value="0.10"></div>
-        <div class="rate-item"><label>Packing material (AUD/kg)</label><input type="text" id="r-packing" value="0.09"></div>
+        <div class="rate-item">
+          <label for="r-fuel">Fuel surcharge % on cartage <span style="color:var(--amber-text);font-weight:500">— update when notified</span></label>
+          <input type="text" id="r-fuel" placeholder="e.g. 43.20">
+        </div>
+        <div class="rate-item">
+          <label for="r-handling">Handling dest (AUD/kg)</label>
+          <input type="text" id="r-handling" value="0.10">
+        </div>
+        <div class="rate-item">
+          <label for="r-packing">Packing material (AUD/kg)</label>
+          <input type="text" id="r-packing" value="0.09">
+        </div>
       </div>
       <p style="font-size:11px;color:var(--text3);margin-top:10px">Pre-filled values are standard Toll rates. Update intl freight each week from the rate Toll provides, and fuel surcharge % whenever Toll sends a rate change notification.</p>
     </div>
     <div id="sea-rates" style="display:none">
       <div class="three-col">
-        <div class="rate-item"><label>Ocean freight (AUD/CBM)</label><input type="text" id="r-ocean" placeholder="e.g. 50.00"></div>
-        <div class="rate-item"><label>Destination port/CFS (AUD/CBM)</label><input type="text" id="r-destport" placeholder="e.g. 110.00"></div>
-        <div class="rate-item"><label>Ex-works quoted total (AUD)</label><input type="text" id="r-exw" placeholder="e.g. 1103.86"></div>
+        <div class="rate-item">
+          <label for="r-ocean">Ocean freight (AUD/CBM)</label>
+          <input type="text" id="r-ocean" placeholder="e.g. 50.00">
+        </div>
+        <div class="rate-item">
+          <label for="r-destport">Destination port/CFS (AUD/CBM)</label>
+          <input type="text" id="r-destport" placeholder="e.g. 110.00">
+        </div>
+        <div class="rate-item">
+          <label for="r-exw">Ex-works quoted total (AUD)</label>
+          <input type="text" id="r-exw" placeholder="e.g. 1103.86">
+        </div>
       </div>
     </div>
     <div id="customs-rates" style="display:none">
@@ -167,19 +196,16 @@
   <div class="results" id="results">
     <div class="metrics" id="metrics"></div>
     <div class="verdict" id="verdict"></div>
-
     <div class="card">
       <div class="card-title">Validation checks</div>
       <div id="checks"></div>
     </div>
-
     <div class="card">
       <div class="card-title">Extracted line items</div>
       <div style="overflow-x:auto">
         <table class="items" id="items-table"></table>
       </div>
     </div>
-
     <div class="card" id="ct-card" style="display:none">
       <div class="card-title">Customs disbursement tracker</div>
       <div id="ct-body"></div>
@@ -187,7 +213,6 @@
   </div>
 
 </div>
-
 <script>
 let pdfFile = null;
 
@@ -195,8 +220,7 @@ document.getElementById('file-input').addEventListener('change', e => {
   const f = e.target.files[0];
   if (!f) return;
   pdfFile = f;
-  const zone = document.getElementById('upload-zone');
-  zone.classList.add('has-file');
+  document.getElementById('upload-zone').classList.add('has-file');
   document.getElementById('upload-label').innerHTML = '<span class="fn">' + f.name + '</span>';
   document.getElementById('run-btn').disabled = false;
 });
@@ -274,7 +298,7 @@ function renderItems(items) {
 
 function renderCustomsTracker(ct) {
   if (!ct) return;
-  document.getElementById('ct-card').style.display = '';
+  document.getElementById('ct-card').style.display = 'block';
   document.getElementById('ct-body').innerHTML =
     '<div class="ct-row"><span class="ct-label">Shipment week</span><span class="ct-val">' + (ct.week || '—') + '</span></div>' +
     '<div class="ct-row"><span class="ct-label">Suppliers expected</span><span class="ct-val">' + ct.suppliersExpected + '</span></div>' +
@@ -318,7 +342,6 @@ async function runValidation() {
 
     const FIXED_AIR = `AU Air (Toll) fixed charges per shipment: customs import clearance AUD 65.00, documentation fee AUD 75.00, payment transaction fee AUD 7.50. Variable per-kg: airport terminal dest 0.77/kg, cartage 0.30/kg, handling 0.10/kg (min $50), packing material 0.09/kg, airport terminal origin ~0.15 USD/kg (zero rated), pick-up origin variable USD. Fuel surcharge is a % of cartage (Toll notifies when % changes).`;
     const FIXED_SEA = `AU Sea (Beyond Borders) fixed charges: customs clearance AUD 120, quarantine AUD 35, sea cargo automation AUD 30, CMR fee AUD 35, delivery order AUD 75, EDI fee AUD 25, LCL CFS slot booking AUD 50. Variable: ocean freight (rate/CBM), destination port & CFS (rate/CBM), LCL delivery (~$275 single truck, more for multiple), cartage fuel surcharge (% of delivery). Ex-works is rolled up (hard to validate exactly).`;
-
     const fixedCtx = type === 'air' ? FIXED_AIR : type === 'sea' ? FIXED_SEA : 'Customs disbursements: expect ~AUD 198-220 per supplier for declaration processing and AQIS. There may be more invoices coming if this only covers some suppliers.';
 
     const prompt = `You are validating a Babyboo AU inbound freight invoice. Analyse the PDF carefully.
@@ -342,21 +365,11 @@ INSTRUCTIONS:
 8. Note any charges not seen before or anything unusual.
 
 RETURN VALID COMPACT JSON ONLY — no markdown, no preamble, no trailing text, no line breaks inside the JSON. Be concise in "detail" fields (max 15 words each):
-{
-  "invoiceTotal": number,
-  "invoiceTotalWithGST": number,
-  "shipmentsBilled": number,
-  "shipmentsExpected": ${numSup},
-  "variance": number or null,
-  "lineItems": [{"charge": string, "ref": string, "amount": number, "gst": "10%" | "Zero rated" | "Exempt"}],
-  "checks": [{"group": string, "name": string, "status": "pass"|"warn"|"flag"|"info", "detail": string}],
-  "customsTracker": {"week": string, "suppliersExpected": number, "thisInvoice": number, "perSupplier": number, "expectedTotal": number, "outstanding": number} or null
-}`;
+{"invoiceTotal":number,"invoiceTotalWithGST":number,"shipmentsBilled":number,"shipmentsExpected":${numSup},"variance":number_or_null,"lineItems":[{"charge":string,"ref":string,"amount":number,"gst":"10%"|"Zero rated"|"Exempt"}],"checks":[{"group":string,"name":string,"status":"pass"|"warn"|"flag"|"info","detail":string}],"customsTracker":{"week":string,"suppliersExpected":number,"thisInvoice":number,"perSupplier":number,"expectedTotal":number,"outstanding":number}_or_null}`;
 
-    setStatus('Analysing invoice with Claude... (this may take 20–30 seconds for multi-page invoices)', true);
+    setStatus('Analysing invoice with Claude... (may take 20–30 seconds)', true);
 
     const WORKER_URL = 'https://babyboo-invoice-proxy.tianakhouri.workers.dev/';
-
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
 
@@ -380,11 +393,7 @@ RETURN VALID COMPACT JSON ONLY — no markdown, no preamble, no trailing text, n
       });
     } catch(fetchErr) {
       clearTimeout(timeout);
-      if (fetchErr.name === 'AbortError') {
-        setStatus('Request timed out after 60 seconds. Try a smaller PDF or check your Worker is deployed correctly.');
-      } else {
-        setStatus('Fetch error: ' + fetchErr.message);
-      }
+      setStatus(fetchErr.name === 'AbortError' ? 'Request timed out — check your Cloudflare Worker is deployed.' : 'Connection error: ' + fetchErr.message);
       document.getElementById('run-btn').disabled = false;
       return;
     }
@@ -395,32 +404,31 @@ RETURN VALID COMPACT JSON ONLY — no markdown, no preamble, no trailing text, n
     try {
       data = JSON.parse(rawText);
     } catch(e) {
-      setStatus('Could not parse API response: ' + rawText.substring(0, 200));
+      setStatus('Unexpected response from server — try again.');
       document.getElementById('run-btn').disabled = false;
       return;
     }
 
-    if (!resp.ok) throw new Error(data.error?.message || 'API error ' + resp.status);
+    if (!resp.ok) {
+      setStatus('API error: ' + (data.error?.message || 'status ' + resp.status));
+      document.getElementById('run-btn').disabled = false;
+      return;
+    }
 
-    if (!data.content || data.content.length === 0) {
-      setStatus('Empty response from API: ' + JSON.stringify(data).substring(0, 200));
+    if (!data.content || !data.content.length) {
+      setStatus('Empty response from API — try again.');
       document.getElementById('run-btn').disabled = false;
       return;
     }
 
     const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-
-    const cleaned = raw
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/\s*```\s*$/i, '')
-      .trim();
+    const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```\s*$/i, '').trim();
 
     let result;
     try {
       result = JSON.parse(cleaned);
     } catch(e) {
-      setStatus('Parse error. Claude responded but JSON was malformed — try again.');
+      setStatus('Could not parse response — try again.');
       document.getElementById('run-btn').disabled = false;
       return;
     }
@@ -431,12 +439,11 @@ RETURN VALID COMPACT JSON ONLY — no markdown, no preamble, no trailing text, n
     const checks = result.checks || [];
     const passed = checks.filter(c => c.status === 'pass').length;
 
-    try { renderMetrics({ total_: result.invoiceTotal, variance: result.variance, passed, total: checks.length, billed: result.shipmentsBilled, expected: result.shipmentsExpected }); } catch(e) { setStatus('renderMetrics error: ' + e.message); return; }
-    try { renderVerdict(checks); } catch(e) { setStatus('renderVerdict error: ' + e.message); return; }
-    try { renderChecks(checks); } catch(e) { setStatus('renderChecks error: ' + e.message); return; }
-    try { renderItems(result.lineItems); } catch(e) { setStatus('renderItems error: ' + e.message); return; }
-    if (result.customsTracker) { try { renderCustomsTracker(result.customsTracker); } catch(e) { setStatus('renderCustomsTracker error: ' + e.message); return; } }
-    setStatus('Done.');
+    renderMetrics({ total_: result.invoiceTotal, variance: result.variance, passed, total: checks.length, billed: result.shipmentsBilled, expected: result.shipmentsExpected });
+    renderVerdict(checks);
+    renderChecks(checks);
+    renderItems(result.lineItems);
+    if (result.customsTracker) renderCustomsTracker(result.customsTracker);
 
   } catch(err) {
     setStatus('Error: ' + err.message);
