@@ -163,6 +163,7 @@
 
   <button class="run-btn" id="run-btn" disabled onclick="runValidation()">Validate invoice</button>
   <div class="status-bar" id="status"></div>
+  <div id="debug-out" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;margin-bottom:1rem;font-size:12px;font-family:monospace;word-break:break-all;white-space:pre-wrap;color:#333"></div>
 
   <div class="results" id="results">
     <div class="metrics" id="metrics"></div>
@@ -390,10 +391,18 @@ RETURN VALID JSON ONLY — no markdown, no preamble, no trailing text. Be concis
     }
     clearTimeout(timeout);
 
-    console.log('HTTP status:', resp.status);
-    const data = await resp.json();
-    console.log('API response:', JSON.stringify(data).substring(0, 2000));
-    setStatus('Response received (check browser console for details). Status: ' + resp.status + ' | ' + JSON.stringify(data).substring(0, 200));
+    const rawText = await resp.text();
+    document.getElementById('debug-out').style.display = '';
+    document.getElementById('debug-out').textContent = 'STATUS: ' + resp.status + ' | RESPONSE: ' + rawText.substring(0, 500);
+
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch(e) {
+      setStatus('Could not parse API response as JSON.');
+      document.getElementById('run-btn').disabled = false;
+      return;
+    }
 
     if (!resp.ok) throw new Error(data.error?.message || 'API error ' + resp.status);
 
