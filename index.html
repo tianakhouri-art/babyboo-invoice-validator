@@ -342,7 +342,7 @@ INSTRUCTIONS:
 7. For customs disbursements: calculate per-supplier amount, expected total for all ${numSup} suppliers, and outstanding amount.
 8. Note any charges not seen before or anything unusual.
 
-RETURN VALID JSON ONLY — no markdown, no preamble, no trailing text. Be concise in "detail" fields (max 20 words each):
+RETURN VALID COMPACT JSON ONLY — no markdown, no preamble, no trailing text, no line breaks inside the JSON. Be concise in "detail" fields (max 15 words each):
 {
   "invoiceTotal": number,
   "invoiceTotalWithGST": number,
@@ -369,7 +369,7 @@ RETURN VALID JSON ONLY — no markdown, no preamble, no trailing text. Be concis
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 4000,
+          max_tokens: 8000,
           messages: [{
             role: 'user',
             content: [
