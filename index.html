@@ -426,23 +426,17 @@ RETURN VALID COMPACT JSON ONLY — no markdown, no preamble, no trailing text, n
     }
 
     setStatus('');
-    document.getElementById('results').style.display = '';
+    document.getElementById('results').style.display = 'block';
 
     const checks = result.checks || [];
     const passed = checks.filter(c => c.status === 'pass').length;
 
-    renderMetrics({
-      total_: result.invoiceTotal,
-      variance: result.variance,
-      passed,
-      total: checks.length,
-      billed: result.shipmentsBilled,
-      expected: result.shipmentsExpected
-    });
-    renderVerdict(checks);
-    renderChecks(checks);
-    renderItems(result.lineItems);
-    if (result.customsTracker) renderCustomsTracker(result.customsTracker);
+    try { renderMetrics({ total_: result.invoiceTotal, variance: result.variance, passed, total: checks.length, billed: result.shipmentsBilled, expected: result.shipmentsExpected }); } catch(e) { setStatus('renderMetrics error: ' + e.message); return; }
+    try { renderVerdict(checks); } catch(e) { setStatus('renderVerdict error: ' + e.message); return; }
+    try { renderChecks(checks); } catch(e) { setStatus('renderChecks error: ' + e.message); return; }
+    try { renderItems(result.lineItems); } catch(e) { setStatus('renderItems error: ' + e.message); return; }
+    if (result.customsTracker) { try { renderCustomsTracker(result.customsTracker); } catch(e) { setStatus('renderCustomsTracker error: ' + e.message); return; } }
+    setStatus('Done.');
 
   } catch(err) {
     setStatus('Error: ' + err.message);
