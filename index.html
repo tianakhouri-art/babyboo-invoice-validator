@@ -376,12 +376,18 @@ RETURN VALID JSON ONLY — no markdown, no preamble, no trailing text. Be concis
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error?.message || 'API error ' + resp.status);
 
+    if (!data.content || data.content.length === 0) {
+      setStatus('API returned empty response. Full response: ' + JSON.stringify(data).substring(0, 400));
+      document.getElementById('run-btn').disabled = false;
+      return;
+    }
+
     const raw = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
     let result;
     try {
       result = JSON.parse(raw.replace(/```json|```/g, '').trim());
     } catch(e) {
-      setStatus('Could not parse response — try again.');
+      setStatus('Parse error — raw response: ' + raw.substring(0, 300));
       document.getElementById('run-btn').disabled = false;
       return;
     }
