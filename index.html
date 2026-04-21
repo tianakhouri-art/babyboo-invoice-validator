@@ -353,25 +353,42 @@ RETURN VALID JSON ONLY — no markdown, no preamble, no trailing text. Be concis
   "customsTracker": {"week": string, "suppliersExpected": number, "thisInvoice": number, "perSupplier": number, "expectedTotal": number, "outstanding": number} or null
 }`;
 
-    setStatus('Analysing invoice with Claude...', true);
+    setStatus('Analysing invoice with Claude... (this may take 20–30 seconds for multi-page invoices)', true);
 
     const WORKER_URL = 'https://babyboo-invoice-proxy.tianakhouri.workers.dev/';
 
-    const resp = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
-        messages: [{
-          role: 'user',
-          content: [
-            {type: 'document', source: {type: 'base64', media_type: 'application/pdf', data: b64}},
-            {type: 'text', text: prompt}
-          ]
-        }]
-      })
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+
+    let resp;
+    try {
+      resp = await fetch(WORKER_URL, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4000,
+          messages: [{
+            role: 'user',
+            content: [
+              {type: 'document', source: {type: 'base64', media_type: 'application/pdf', data: b64}},
+              {type: 'text', text: prompt}
+            ]
+          }]
+        })
+      });
+    } catch(fetchErr) {
+      clearTimeout(timeout);
+      if (fetchErr.name === 'AbortError') {
+        setStatus('Request timed out after 60 seconds. Try a smaller PDF or check your Worker is deployed correctly.');
+      } else {
+        setStatus('Fetch error: ' + fetchErr.message);
+      }
+      document.getElementById('run-btn').disabled = false;
+      return;
+    }
+    clearTimeout(timeout);
 
     console.log('HTTP status:', resp.status);
     const data = await resp.json();
