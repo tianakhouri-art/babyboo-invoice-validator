@@ -355,7 +355,7 @@ RETURN VALID JSON ONLY — no markdown, no preamble, no trailing text:
 
     setStatus('Analysing invoice with Claude...', true);
 
-    const WORKER_URL = 'https://YOUR-WORKER-NAME.YOUR-ACCOUNT.workers.dev';
+    const WORKER_URL = 'https://babyboo-invoice-proxy.tianakhouri.workers.dev/';
 
     const resp = await fetch(WORKER_URL, {
       method: 'POST',
