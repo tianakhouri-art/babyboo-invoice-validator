@@ -373,7 +373,11 @@ RETURN VALID JSON ONLY — no markdown, no preamble, no trailing text. Be concis
       })
     });
 
+    console.log('HTTP status:', resp.status);
     const data = await resp.json();
+    console.log('API response:', JSON.stringify(data).substring(0, 2000));
+    setStatus('Response received (check browser console for details). Status: ' + resp.status + ' | ' + JSON.stringify(data).substring(0, 200));
+
     if (!resp.ok) throw new Error(data.error?.message || 'API error ' + resp.status);
 
     if (!data.content || data.content.length === 0) {
@@ -383,6 +387,7 @@ RETURN VALID JSON ONLY — no markdown, no preamble, no trailing text. Be concis
     }
 
     const raw = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
+    console.log('Raw Claude text:', raw.substring(0, 1000));
     let result;
     try {
       result = JSON.parse(raw.replace(/```json|```/g, '').trim());
